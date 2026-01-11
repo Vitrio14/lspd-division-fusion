@@ -17,7 +17,6 @@
 
         body {
             background-color: var(--terminal-bg);
-            /* Percorso banner nel main */
             background: linear-gradient(rgba(5, 7, 10, 0.95), rgba(5, 7, 10, 0.95)), url('banner.png') no-repeat center center fixed;
             background-size: cover; color: #ffffff; font-family: 'Barlow Condensed', sans-serif;
             margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
@@ -35,14 +34,21 @@
         .tab-btn { background: rgba(0,0,0,0.5); border: 1px solid var(--police-blue); color: #fff; padding: 12px 25px; font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; font-size: 0.75rem; }
         .tab-btn.active { background: var(--police-blue); color: #000; font-weight: bold; box-shadow: 0 0 15px var(--police-blue); }
 
+        /* Stile per i dati salvati (Giallo accentuato) */
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; color: var(--police-accent); font-weight: 500; font-size: 1.1rem; }
+        tr:hover td { background: rgba(0, 85, 255, 0.15); color: #fff; }
+
+        /* Barra di ricerca */
+        .search-wrapper { margin-bottom: 20px; position: relative; }
+        .search-input { background: rgba(0,0,0,0.6); border: 1px solid var(--police-accent); color: var(--police-accent); padding: 10px 40px; font-family: 'Orbitron'; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        .search-input::placeholder { color: rgba(255, 215, 0, 0.4); }
+
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; background: rgba(0, 85, 255, 0.03); padding: 25px; border: 1px solid rgba(0, 85, 255, 0.2); margin-bottom: 30px; }
         label { color: var(--police-accent); font-family: 'Orbitron'; font-size: 0.7rem; margin-bottom: 8px; display: block; }
         input, select, textarea { background: #000; border: 1px solid var(--border-blue); color: #fff; padding: 12px; font-family: 'Barlow Condensed'; font-size: 1.1rem; width: 100%; box-sizing: border-box; outline: none; }
         
         table { width: 100%; border-collapse: collapse; }
-        th { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--police-accent); border-bottom: 2px solid var(--police-blue); padding: 15px; text-align: left; background: rgba(0, 85, 255, 0.1); }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        tr:hover td { background: rgba(0, 85, 255, 0.15); }
+        th { font-family: 'Orbitron'; font-size: 0.8rem; color: #fff; border-bottom: 2px solid var(--police-blue); padding: 15px; text-align: left; background: rgba(0, 85, 255, 0.3); }
 
         button { background: var(--police-dark); color: white; border: 1px solid var(--police-blue); padding: 12px 25px; font-family: 'Orbitron'; cursor: pointer; font-size: 0.75rem; transition: 0.3s; }
         button:hover { background: var(--police-blue); color: black; }
@@ -119,6 +125,9 @@
     </div>
 
     <div id="section-agenti" class="tab-content">
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="search-agenti" placeholder="CERCA AGENTE PER NOME, MATRICOLA O DIVISIONE..." onkeyup="filterTable('table-agenti', this.value)">
+        </div>
         <div id="wrapper-agenti" class="hidden">
             <form id="formAgente" class="form-grid">
                 <div><label>Nome</label><input type="text" id="aNome" required></div>
@@ -142,6 +151,9 @@
     </div>
 
     <div id="section-operazioni" class="tab-content hidden">
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="search-ops" placeholder="CERCA MISSIONE PER CODENAME O UNITÀ..." onkeyup="filterTable('table-ops', this.value)">
+        </div>
         <div id="wrapper-ops" class="hidden">
             <form id="formOps" class="form-grid">
                 <div style="grid-column: span 2;"><label>Codename</label><input type="text" id="oTitolo" required></div>
@@ -165,6 +177,9 @@
     </div>
 
     <div id="section-fascicoli" class="tab-content hidden">
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="search-files" placeholder="CERCA FASCICOLO PER ID O SOGGETTO..." onkeyup="filterTable('table-files', this.value)">
+        </div>
         <div id="wrapper-files" class="hidden">
             <form id="formFiles" class="form-grid">
                 <div><label>ID Caso</label><input type="text" id="fCod" required placeholder="LSPD-XXXX"></div>
@@ -240,6 +255,16 @@
         event.target.classList.add('active');
     }
 
+    // --- FUNZIONE DI FILTRO RICERCA ---
+    function filterTable(tableId, query) {
+        const filter = query.toLowerCase();
+        const rows = document.getElementById(tableId).getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const text = rows[i].textContent.toLowerCase();
+            rows[i].style.display = text.includes(filter) ? "" : "none";
+        }
+    }
+
     // --- MODALE INTELLIGENTE ---
     function openModal(id, collection, data) {
         const isAdmin = auth.currentUser.email === ADMIN_EMAIL;
@@ -285,7 +310,6 @@
         closeModal(); loadAll();
     }
 
-    // --- SISTEMA ELIMINAZIONE PROFESSIONALE ---
     let pendingDelete = null;
     function triggerConfirm(id, col) {
         pendingDelete = {id, col};
@@ -301,7 +325,6 @@
         }
     };
 
-    // --- CARICAMENTO DATI ---
     async function loadAll() {
         const agenti = await db.collection("div_agenti").get();
         renderTable('table-agenti', agenti, d => `<td>${d.nome}</td><td>#${d.matricola}</td><td>${d.divisione}</td><td>${d.qualifica}</td>`, "div_agenti");
@@ -327,7 +350,6 @@
         });
     }
 
-    // --- CREAZIONE RECORD (CON VALIDAZIONE) ---
     document.getElementById('formAgente').onsubmit = async e => {
         e.preventDefault();
         await db.collection("div_agenti").add({
