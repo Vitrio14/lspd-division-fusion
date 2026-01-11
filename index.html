@@ -43,7 +43,7 @@
         .search-input { background: rgba(0,0,0,0.6); border: 1px solid var(--police-accent); color: var(--police-accent); padding: 10px 40px; font-family: 'Orbitron'; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
         .search-input::placeholder { color: rgba(255, 215, 0, 0.4); }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; background: rgba(0, 85, 255, 0.03); padding: 25px; border: 1px solid rgba(0, 85, 255, 0.2); margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; background: rgba(0, 85, 255, 0.03); padding: 25px; border: 1px solid rgba(0, 85, 255, 0.2); margin-bottom: 30px; align-items: end; }
         label { color: var(--police-accent); font-family: 'Orbitron'; font-size: 0.7rem; margin-bottom: 8px; display: block; }
         input, select, textarea { background: #000; border: 1px solid var(--border-blue); color: #fff; padding: 12px; font-family: 'Barlow Condensed'; font-size: 1.1rem; width: 100%; box-sizing: border-box; outline: none; }
         
@@ -141,7 +141,7 @@
                     </select>
                 </div>
                 <div><label>Qualifica</label><input type="text" id="aQual" required></div>
-                <button type="submit" style="background:var(--success); color:#000;">AGGIUNGI AGENTE</button>
+                <button type="submit" style="background:var(--success); color:#000; height: 46px; border:none; font-weight:bold;">AGGIUNGI AGENTE</button>
             </form>
         </div>
         <table>
@@ -255,7 +255,6 @@
         event.target.classList.add('active');
     }
 
-    // --- FUNZIONE DI FILTRO RICERCA ---
     function filterTable(tableId, query) {
         const filter = query.toLowerCase();
         const rows = document.getElementById(tableId).getElementsByTagName('tr');
@@ -265,7 +264,6 @@
         }
     }
 
-    // --- MODALE INTELLIGENTE ---
     function openModal(id, collection, data) {
         const isAdmin = auth.currentUser.email === ADMIN_EMAIL;
         const body = document.getElementById('modalBody');
