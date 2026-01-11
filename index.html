@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSPD - Database Divisioni</title>
+    
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Barlow+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --police-blue: #0055ff; --police-dark: #001133; --police-accent: #ffd700;
+            --terminal-bg: #05070a; --border-blue: #0055ff; --neon-glow: rgba(0, 85, 255, 0.4);
+            --danger: #ff4444; --success: #00ff88; --warning: #ffaa00; --modal-bg: #0a0e14;
+        }
+
+        body {
+            background-color: var(--terminal-bg);
+            /* Percorso banner nel main */
+            background: linear-gradient(rgba(5, 7, 10, 0.95), rgba(5, 7, 10, 0.95)), url('banner.png') no-repeat center center fixed;
+            background-size: cover; color: #ffffff; font-family: 'Barlow Condensed', sans-serif;
+            margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        .container { width: 95%; max-width: 1200px; background: rgba(13, 17, 23, 0.95); border: 1px solid var(--border-blue); padding: 25px; margin: 20px 0; backdrop-filter: blur(10px); box-shadow: 0 0 20px var(--neon-glow); }
+        .hidden { display: none !important; }
+        
+        .stats-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: rgba(0, 85, 255, 0.05); border: 1px solid rgba(0, 85, 255, 0.3); padding: 15px; text-align: center; border-left: 4px solid var(--police-blue); }
+        .stat-value { font-family: 'Orbitron'; font-size: 1.8rem; display: block; font-weight: bold; color: var(--police-accent); }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; color: #aaa; letter-spacing: 2px; }
+
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(0, 85, 255, 0.3); padding-bottom: 10px; }
+        .tab-btn { background: rgba(0,0,0,0.5); border: 1px solid var(--police-blue); color: #fff; padding: 12px 25px; font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; font-size: 0.75rem; }
+        .tab-btn.active { background: var(--police-blue); color: #000; font-weight: bold; box-shadow: 0 0 15px var(--police-blue); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; background: rgba(0, 85, 255, 0.03); padding: 25px; border: 1px solid rgba(0, 85, 255, 0.2); margin-bottom: 30px; }
+        label { color: var(--police-accent); font-family: 'Orbitron'; font-size: 0.7rem; margin-bottom: 8px; display: block; }
+        input, select, textarea { background: #000; border: 1px solid var(--border-blue); color: #fff; padding: 12px; font-family: 'Barlow Condensed'; font-size: 1.1rem; width: 100%; box-sizing: border-box; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--police-accent); border-bottom: 2px solid var(--police-blue); padding: 15px; text-align: left; background: rgba(0, 85, 255, 0.1); }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        tr:hover td { background: rgba(0, 85, 255, 0.15); }
+
+        button { background: var(--police-dark); color: white; border: 1px solid var(--police-blue); padding: 12px 25px; font-family: 'Orbitron'; cursor: pointer; font-size: 0.75rem; transition: 0.3s; }
+        button:hover { background: var(--police-blue); color: black; }
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); display: none; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--modal-bg); border: 1px solid var(--police-blue); width: 95%; max-width: 850px; display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { padding: 20px 30px; background: rgba(0, 85, 255, 0.1); border-bottom: 1px solid var(--police-blue); display: flex; justify-content: space-between; }
+        .modal-body { padding: 30px; overflow-y: auto; }
+        .modal-footer { padding: 20px 30px; background: rgba(0,0,0,0.4); display: flex; gap: 15px; justify-content: flex-end; }
+        
+        .confirm-modal { max-width: 400px !important; border: 2px solid var(--danger) !important; text-align: center; }
+
+        #notification-container { position: fixed; top: 30px; right: 30px; z-index: 10001; }
+        .notice { background: #000; border-left: 5px solid var(--police-blue); color: #fff; padding: 15px 25px; font-family: 'Orbitron'; font-size: 0.8rem; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+<div id="notification-container"></div>
+
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle" style="margin:0; font-size:1.2rem; color:var(--police-accent); font-family:Orbitron;">DETTAGLI</h2>
+            <span style="cursor:pointer; color:var(--danger);" onclick="closeModal()">[ CHIUDI ]</span>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer" id="modalActions"></div>
+    </div>
+</div>
+
+<div id="confirmOverlay" class="modal-overlay">
+    <div class="modal-content confirm-modal">
+        <div style="padding: 30px;">
+            <h2 style="font-family:Orbitron; color:var(--danger);">AUTORIZZAZIONE NECESSARIA</h2>
+            <p>Sei sicuro di voler eliminare definitivamente questo record dal database centrale?</p>
+            <div style="display:flex; justify-content:center; gap:15px; margin-top:25px;">
+                <button onclick="closeConfirm()">ANNULLA</button>
+                <button id="finalDeleteBtn" class="btn-danger">ELIMINA</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="authSection" class="container" style="max-width:400px; text-align:center; margin-top: 100px;">
+    <img src="logo.png" alt="LSPD Logo" style="width: 120px; margin-bottom: 20px;">
+    <h2 style="font-family:'Orbitron'; color:var(--police-accent);">DATABASE DIVISIONI</h2>
+    <form id="loginForm">
+        <input type="email" id="loginEmail" required placeholder="esempio@email.it" style="margin-bottom:15px;">
+        <input type="password" id="loginPassword" required placeholder="••••••••" style="margin-bottom:25px;">
+        <button type="submit" style="width:100%;">EFFETTUA IL LOGIN</button>
+    </form>
+</div>
+
+<div id="mainApp" class="container hidden">
+    <div style="display:flex; justify-content: space-between; border-bottom: 1px solid var(--police-blue); padding-bottom: 20px; margin-bottom: 30px;">
+        <h1 style="font-family:'Orbitron'; font-size:1.5rem; margin:0;">CENTRO COMANDO DIVISIONI</h1>
+        <button onclick="logout()" class="btn-danger">LOGOUT</button>
+    </div>
+
+    <div class="stats-dashboard">
+        <div class="stat-card"><span class="stat-label">Operativi</span><span id="count-agenti" class="stat-value">0</span></div>
+        <div class="stat-card"><span class="stat-label">Missioni</span><span id="count-ops" class="stat-value">0</span></div>
+        <div class="stat-card"><span class="stat-label">Fascicoli</span><span id="count-fascicoli" class="stat-value">0</span></div>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('agenti')">DATABASE AGENTI</button>
+        <button class="tab-btn" onclick="switchTab('operazioni')">REPORT MISSIONI</button>
+        <button class="tab-btn" onclick="switchTab('fascicoli')">ARCHIVIO FASCICOLI</button>
+    </div>
+
+    <div id="section-agenti" class="tab-content">
+        <div id="wrapper-agenti" class="hidden">
+            <form id="formAgente" class="form-grid">
+                <div><label>Nome</label><input type="text" id="aNome" required></div>
+                <div><label>Matricola</label><input type="text" id="aMatricola" required></div>
+                <div>
+                    <label>Divisione</label>
+                    <select id="aDiv" required>
+                        <option>SWAT</option><option>Detective Bureau</option><option>T.E.D</option>
+                        <option>C.R.A.S.H</option><option>K9 Unit</option><option>Air Support</option>
+                        <option>Marine Unit</option>
+                    </select>
+                </div>
+                <div><label>Qualifica</label><input type="text" id="aQual" required></div>
+                <button type="submit" style="background:var(--success); color:#000;">AGGIUNGI AGENTE</button>
+            </form>
+        </div>
+        <table>
+            <thead><tr><th>NOME</th><th>MATRICOLA</th><th>DIVISIONE</th><th>QUALIFICA</th></tr></thead>
+            <tbody id="table-agenti"></tbody>
+        </table>
+    </div>
+
+    <div id="section-operazioni" class="tab-content hidden">
+        <div id="wrapper-ops" class="hidden">
+            <form id="formOps" class="form-grid">
+                <div style="grid-column: span 2;"><label>Codename</label><input type="text" id="oTitolo" required></div>
+                <div><label>Data</label><input type="date" id="oData" required></div>
+                <div>
+                    <label>Unità Leader</label>
+                    <select id="oDiv" required>
+                        <option>SWAT</option><option>Detective Bureau</option><option>C.R.A.S.H</option>
+                        <option>T.E.D</option><option>Air Support</option><option>K9 Unit</option>
+                        <option>Marine Unit</option>
+                    </select>
+                </div>
+                <div style="grid-column: span 4;"><label>Rapporto Dettagliato</label><textarea id="oReport" required style="height:100px;"></textarea></div>
+                <button type="submit" style="grid-column: span 4; background:var(--police-blue);">ARCHIVIA REPORT</button>
+            </form>
+        </div>
+        <table>
+            <thead><tr><th>DATA</th><th>CODENAME</th><th>UNITÀ</th><th>ANTEPRIMA</th></tr></thead>
+            <tbody id="table-ops"></tbody>
+        </table>
+    </div>
+
+    <div id="section-fascicoli" class="tab-content hidden">
+        <div id="wrapper-files" class="hidden">
+            <form id="formFiles" class="form-grid">
+                <div><label>ID Caso</label><input type="text" id="fCod" required placeholder="LSPD-XXXX"></div>
+                <div style="grid-column: span 2;"><label>Soggetto</label><input type="text" id="fSogg" required></div>
+                <div>
+                    <label>Livello Rischio</label>
+                    <select id="fStato" required>
+                        <option>IN CORSO</option><option>ARCHIVIATO</option><option>PRIORITÀ ROSSA</option>
+                    </select>
+                </div>
+                <div style="grid-column: span 4;"><label>Dettagli Investigativi</label><textarea id="fDett" required style="height:80px;"></textarea></div>
+                <button type="submit" style="grid-column: span 4; background:var(--warning); color:#000;">CREA FASCICOLO</button>
+            </form>
+        </div>
+        <table>
+            <thead><tr><th>ID</th><th>SOGGETTO</th><th>STATO</th></tr></thead>
+            <tbody id="table-files"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfIW4GjBZ4QGPvfJtzLAr34VxDRLzcU6M",
+        authDomain: "lspd-portal-d34b0.firebaseapp.com",
+        projectId: "lspd-portal-d34b0",
+        storageBucket: "lspd-portal-d34b0.firebasestorage.app",
+        messagingSenderId: "991237515788",
+        appId: "1:991237515788:web:302c1b6819947116199c29"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const ADMIN_EMAIL = "lspd-division@fusion.it";
+    const VIEWER_EMAIL = "lspd-gestionale@fusion.it";
+
+    const UNITA_OPZIONI = ["SWAT", "Detective Bureau", "T.E.D", "C.R.A.S.H", "K9 Unit", "Air Support", "Marine Unit"];
+    const STATO_FASCICOLO = ["IN CORSO", "ARCHIVIATO", "PRIORITÀ ROSSA"];
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            const email = user.email.toLowerCase();
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            if (email === ADMIN_EMAIL) {
+                document.querySelectorAll('[id^="wrapper-"]').forEach(w => w.classList.remove('hidden'));
+            }
+            loadAll();
+        } else {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', e => {
+        e.preventDefault();
+        auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)
+            .catch(() => showNotice("CREDENTIALI NON VALIDE", "danger"));
+    });
+
+    function logout() { auth.signOut().then(() => window.location.reload()); }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('section-' + tab).classList.remove('hidden');
+        event.target.classList.add('active');
+    }
+
+    // --- MODALE INTELLIGENTE ---
+    function openModal(id, collection, data) {
+        const isAdmin = auth.currentUser.email === ADMIN_EMAIL;
+        const body = document.getElementById('modalBody');
+        const actions = document.getElementById('modalActions');
+        
+        document.getElementById('modalOverlay').classList.add('active');
+        body.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;" id="gridFields"></div>`;
+        const grid = document.getElementById('gridFields');
+        
+        for (const [key, value] of Object.entries(data)) {
+            const wrap = document.createElement('div');
+            const label = `<label>${key.toUpperCase()}</label>`;
+            
+            if (key === 'divisione' || key === 'unita') {
+                let opts = UNITA_OPZIONI.map(o => `<option ${o===value?'selected':''}>${o}</option>`).join('');
+                wrap.innerHTML = `${label}<select id="edit-${key}" ${!isAdmin?'disabled':''}>${opts}</select>`;
+            } else if (key === 'stato') {
+                let opts = STATO_FASCICOLO.map(o => `<option ${o===value?'selected':''}>${o}</option>`).join('');
+                wrap.innerHTML = `${label}<select id="edit-${key}" ${!isAdmin?'disabled':''}>${opts}</select>`;
+            } else if (key === 'report' || key === 'dettagli') {
+                wrap.style.gridColumn = "span 2";
+                wrap.innerHTML = `${label}<textarea id="edit-${key}" ${!isAdmin?'readonly':''} style="height:150px;">${value}</textarea>`;
+            } else {
+                wrap.innerHTML = `${label}<input type="text" id="edit-${key}" value="${value}" ${!isAdmin?'readonly':''}>`;
+            }
+            grid.appendChild(wrap);
+        }
+
+        actions.innerHTML = isAdmin ? `
+            <button class="btn-danger" onclick="triggerConfirm('${id}', '${collection}')">ELIMINA</button>
+            <button style="background:var(--success); color:#000;" onclick="salvaModifiche('${id}', '${collection}')">SALVA</button>
+        ` : '';
+    }
+
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+    async function salvaModifiche(id, collection) {
+        const updated = {};
+        document.querySelectorAll('[id^="edit-"]').forEach(i => updated[i.id.replace('edit-','')] = i.value);
+        await db.collection(collection).doc(id).update(updated);
+        showNotice("RECORD AGGIORNATO", "success");
+        closeModal(); loadAll();
+    }
+
+    // --- SISTEMA ELIMINAZIONE PROFESSIONALE ---
+    let pendingDelete = null;
+    function triggerConfirm(id, col) {
+        pendingDelete = {id, col};
+        document.getElementById('confirmOverlay').classList.add('active');
+    }
+    function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('active'); }
+    
+    document.getElementById('finalDeleteBtn').onclick = async () => {
+        if(pendingDelete) {
+            await db.collection(pendingDelete.col).doc(pendingDelete.id).delete();
+            showNotice("RECORD RIMOSSO", "danger");
+            closeConfirm(); closeModal(); loadAll();
+        }
+    };
+
+    // --- CARICAMENTO DATI ---
+    async function loadAll() {
+        const agenti = await db.collection("div_agenti").get();
+        renderTable('table-agenti', agenti, d => `<td>${d.nome}</td><td>#${d.matricola}</td><td>${d.divisione}</td><td>${d.qualifica}</td>`, "div_agenti");
+        document.getElementById('count-agenti').innerText = agenti.size;
+
+        const ops = await db.collection("div_ops").orderBy("data","desc").get();
+        renderTable('table-ops', ops, d => `<td>${d.data}</td><td style="color:var(--police-accent)">${d.titolo}</td><td>${d.divisione}</td><td>${d.report.substring(0,30)}...</td>`, "div_ops");
+        document.getElementById('count-ops').innerText = ops.size;
+
+        const files = await db.collection("div_fascicoli").get();
+        renderTable('table-files', files, d => `<td>${d.codice}</td><td>${d.soggetto}</td><td style="color:${d.stato.includes('ROSSA')?'var(--danger)':'var(--success)'}">${d.stato}</td>`, "div_fascicoli");
+        document.getElementById('count-fascicoli').innerText = files.size;
+    }
+
+    function renderTable(target, snap, rowFunc, colName) {
+        const b = document.getElementById(target);
+        b.innerHTML = "";
+        snap.forEach(doc => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = rowFunc(doc.data());
+            tr.onclick = () => openModal(doc.id, colName, doc.data());
+            b.appendChild(tr);
+        });
+    }
+
+    // --- CREAZIONE RECORD (CON VALIDAZIONE) ---
+    document.getElementById('formAgente').onsubmit = async e => {
+        e.preventDefault();
+        await db.collection("div_agenti").add({
+            nome: document.getElementById('aNome').value, matricola: document.getElementById('aMatricola').value,
+            divisione: document.getElementById('aDiv').value, qualifica: document.getElementById('aQual').value
+        });
+        showNotice("AGENTE REGISTRATO", "success"); e.target.reset(); loadAll();
+    };
+
+    document.getElementById('formOps').onsubmit = async e => {
+        e.preventDefault();
+        await db.collection("div_ops").add({
+            titolo: document.getElementById('oTitolo').value, data: document.getElementById('oData').value,
+            divisione: document.getElementById('oDiv').value, report: document.getElementById('oReport').value
+        });
+        showNotice("REPORT ARCHIVIATO", "success"); e.target.reset(); loadAll();
+    };
+
+    document.getElementById('formFiles').onsubmit = async e => {
+        e.preventDefault();
+        await db.collection("div_fascicoli").add({
+            codice: document.getElementById('fCod').value, soggetto: document.getElementById('fSogg').value, 
+            stato: document.getElementById('fStato').value, dettagli: document.getElementById('fDett').value
+        });
+        showNotice("FASCICOLO CREATO", "success"); e.target.reset(); loadAll();
+    };
+
+    function showNotice(msg, type) {
+        const c = document.getElementById('notification-container');
+        const n = document.createElement('div');
+        n.className = 'notice'; n.style.borderLeftColor = `var(--${type})`;
+        n.innerText = msg; c.appendChild(n);
+        setTimeout(() => n.remove(), 3000);
+    }
+</script>
+</body>
+</html>
