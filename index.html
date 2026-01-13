@@ -81,19 +81,7 @@
         .notice-exit { animation: slideOutHUD 0.3s forwards; }
         @keyframes slideOutHUD { to { opacity: 0; transform: translateX(50%); filter: blur(10px); } }
 
-        .terminal-footer { 
-            width: 100%; 
-            padding: 25px 0; 
-            text-align: center; 
-            background: rgba(0, 10, 30, 0.8);
-            border-top: 1px solid var(--police-blue);
-            box-shadow: 0 -5px 20px var(--neon-glow);
-            margin-top: auto;
-            font-family: 'Orbitron';
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.6);
-            letter-spacing: 2px;
-        }
+.main-footer { margin-top: auto; padding: 20px; text-align: center; width: 100%; border-top: 1px solid var(--police-blue); background: rgba(0,0,0,0.8); }
 
         .footer-bar {
             display: flex;
@@ -235,9 +223,9 @@
     </div>
 </div>
 
-<footer class="terminal-footer">
-    <div class="footer-bar">
-        <span class="copyright">© 2026 LOS SANTOS POLICE DEPARTMENT — PROTOCOLLO FUSION ETERNAL</span>
+<footer class="main-footer">
+    <div style="color: rgba(255,255,255,0.6); font-family: 'Orbitron'; font-size: 0.7rem; letter-spacing: 1px;">
+        © 2026 <span style="color: var(--police-accent);">LOS SANTOS POLICE DEPARTMENT</span> — PROTOCOLLO FUSION ETERNAL
     </div>
 </footer>
 
@@ -431,4 +419,3 @@
 </script>
 </body>
 </html>
-
